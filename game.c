@@ -9,10 +9,7 @@ extern int height;
 extern int width;
 
 int check_win(int player_y, int player_x) {
-    // Returns an integer meaning two options: either you win or you keep going
-    if (player_y < 0 || player_y >= height || player_x < 0 || player_x >= width) {
-        // Checks if the position is above or below the top/bottom row, same for sides
-        //This would mean the player escaped the box
+    if (player_y <= 0 || player_y >= height - 1 || player_x <= 0 || player_x >= width - 1) {
         return YOU_WIN;
     }
     return KEEP_GOING;

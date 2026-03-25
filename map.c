@@ -41,16 +41,11 @@ static void printc(char c) {
 void print_map(void) {
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
-            // USE ELSE IF to ensure only ONE character is printed per coordinate
-
-
-
             // Pull the character (WALL or EMPTY) from the array
             char tile = map[(y * width) + x];
             printc(tile);
 
-
-            // Space between columns - only use ONE or TWO spaces
+            // Space between columnsa
             if (x < width - 1) {
                 printf(" ");
             }

@@ -14,56 +14,32 @@ char sees_player(int player_y, int player_x, int minotaur_y, int minotaur_x) {
     // if there's a wall in between, they can't see
     // if one of them is the same, check if the path in between is clear
 
-    //same row/col
+    // Check if they are on the exact same tile FIRST
+    if (player_y == minotaur_y && player_x == minotaur_x) {
+        return CAUGHT_PLAYER;
+    }
+
+    if (player_y != minotaur_y && player_x != minotaur_x) return SEES_NOTHING;
+
+    // Same Column
     if (player_x == minotaur_x) {
-        int start, end;
-        char direction;
-        // Determine who is further up the map to set the loop range
-        if (player_y < minotaur_y) {
-            start = player_y;
-            end = minotaur_y;
-            direction = UP;
-        } else {
-            start = minotaur_y;
-            end = player_y;
-            direction = DOWN;
-        }
-
-        // Check every tile between them for a wall
+        int start = (player_y < minotaur_y) ? player_y : minotaur_y;
+        int end = (player_y < minotaur_y) ? minotaur_y : player_y;
         for (int i = start + 1; i < end; i++) {
-            if (map[(i * width) + player_x] == WALL) {
-                return SEES_NOTHING;
-            }
+            if (map[i * width + player_x] == WALL) return SEES_NOTHING;
         }
-        return direction;
+        return (player_y < minotaur_y) ? UP : DOWN;
     }
 
-    // 2. Check if they are in the same row
+    // Same Row
     if (player_y == minotaur_y) {
-        int start, end;
-        char direction;
-
-        // Determine who is further left to set the loop range
-        if (player_x < minotaur_x) {
-            start = player_x;
-            end = minotaur_x;
-            direction = LEFT;
-        } else {
-            start = minotaur_x;
-            end = player_x;
-            direction = RIGHT;
-        }
-
-        // Check every tile between them for a wall
+        int start = (player_x < minotaur_x) ? player_x : minotaur_x;
+        int end = (player_x < minotaur_x) ? minotaur_x : player_x;
         for (int i = start + 1; i < end; i++) {
-            if (map[(player_y * width) + i] == WALL) {
-                return SEES_NOTHING;
-            }
+            if (map[player_y * width + i] == WALL) return SEES_NOTHING;
         }
-        return direction;
+        return (player_x < minotaur_x) ? LEFT : RIGHT;
     }
-
-    // If they aren't in the same row or column, the Minotaur sees nothing
     return SEES_NOTHING;
 }
 
@@ -83,9 +59,14 @@ int move_character(int * y, int * x, char direction, char character) {
     else if (direction == DOWN) next_y++;
     else if (direction == LEFT) next_x--;
     else if (direction == RIGHT) next_x++;
+    else return MOVED_INVALID_DIRECTION;
 
-    // Boundary check to prevent the "+1y" wrap-around bug
-    if (next_y < 0 || next_y >= height || next_x < 0 || next_x >= width) return MOVED_WALL;
+    // If it's the PLAYER trying to leave the map, don't.
+    if (character == PLAYER) {
+        if (next_y < 0 || next_y >= height || next_x < 0 || next_x >= width) {
+            return MOVED_WALL;
+        }
+    }
 
     if (map[(next_y * width) + next_x] == WALL) {
         return MOVED_WALL;
@@ -107,31 +88,39 @@ int charge_minotaur(int *y, int *x, int player_y, int player_x, char charge_dire
     // when the wall is hit, move the Minotaur into the wall in the direction it is charging
     // calculate the new coordinates
 
-    // Charge for up to 2 steps
+    // Fail fix
+    if (charge_direction != UP && charge_direction != DOWN &&
+        charge_direction != LEFT && charge_direction != RIGHT) {
+        return MOVED_INVALID_DIRECTION;
+    }
+
     for (int i = 0; i < MINOTAUR_CHARGE_STEP_SIZE; i++) {
+        // We need to check if the NEXT step would land on the player
+        // OR let move_character do it and then update the map.
         int status = move_character(y, x, charge_direction, MINOTAUR);
 
         if (status == MOVED_WALL) {
-            int wall_y = *y;
-            int wall_x = *x;
-
-            //guess wall dir
+            int wall_y = *y, wall_x = *x;
             if (charge_direction == UP) wall_y--;
             else if (charge_direction == DOWN) wall_y++;
             else if (charge_direction == LEFT) wall_x--;
             else if (charge_direction == RIGHT) wall_x++;
 
-            // BREAK AND MOVE: 1 step smash
-            map[(*y * width) + *x] = EMPTY;
-            map[(wall_y * width) + wall_x] = MINOTAUR;
-            *y = wall_y;
-            *x = wall_x;
-
-            return MOVED_WALL; // Returns to main.c to reset charge
+            if (wall_y >= 0 && wall_y < height && wall_x >= 0 && wall_x < width) {
+                map[(*y * width) + *x] = EMPTY;
+                map[(wall_y * width) + wall_x] = MINOTAUR;
+                *y = wall_y;
+                *x = wall_x;
+            }
+            return MOVED_WALL;
         }
 
-        // If caught player during charge
-        if (*y == player_y && *x == player_x) return MOVED_OKAY;
+        // Caught player
+        if (*y == player_y && *x == player_x) {
+            // Ensure the map shows the Minotaur is now standing where the player was
+            map[(*y * width) + *x] = MINOTAUR;
+            return CAUGHT_PLAYER; // Stop immediately and return the correct code
+        }
     }
     return MOVED_OKAY;
 }

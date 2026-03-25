@@ -27,26 +27,8 @@ int width, height;
  * more information about how to write tests.
  */
 
-/* Tests for map.c */
 
-TEST_CASE("Testing for loss") {
-    CHECK(check_loss(3,3,3,3) == YOU_LOSE);
-    // Lost because same position
-    CHECK(check_loss(3,3,1,1) == KEEP_GOING);
-    // Keeps going because not same position
-}
 
-TEST_CASE("Testing for win") {
-    width = 10;
-    height = 10;
-    // Adds global values so the test has something to test against
-    CHECK(check_win(5,5) == KEEP_GOING);
-    // Keeps going because not outside the width
-    CHECK(check_win(5,10) == YOU_WIN);
-    // Won because outside
-    CHECK(check_win(-1,5) == YOU_WIN);
-    // Won because outside
-}
 
 TEST_CASE("Manual movement") {
     width = 3; height = 3;
@@ -61,8 +43,6 @@ TEST_CASE("Manual movement") {
     CHECK(px == 1);
 }
 
-TEST_SUITE_BEGIN("Map tests");
-
 // Tests for load_map
 TEST_CASE("A test for load_map") {
     CHECK(0 == 0);
@@ -72,22 +52,139 @@ TEST_SUITE_END();
 
 /* tests for character.c */
 TEST_SUITE_BEGIN("Character tests");
+TEST_CASE("move_character - All outcomes") {
+    width = 3; height = 1;
+    char test_map[] = {'P', ' ', 'W'};
+    map = test_map;
+    int py = 0, px = 0;
+
+    // 1. Invalid direction (covers first if)
+    CHECK(move_character(&py, &px, 'z', PLAYER) == MOVED_INVALID_DIRECTION);
+
+    // 2. Move OK (covers empty space logic and map update)
+    CHECK(move_character(&py, &px, 'd', PLAYER) == MOVED_OKAY);
+    CHECK(px == 1);
+    CHECK(test_map[0] == ' ');
+    CHECK(test_map[1] == PLAYER);
+
+    // 3. Hit Wall (covers wall collision branch)
+    CHECK(move_character(&py, &px, 'd', PLAYER) == MOVED_WALL);
+}
 
 // tests for move_character
+TEST_SUITE_BEGIN("move_character");
+TEST_CASE("test for load_map") {
+
+}
+
+TEST_SUITE_END();
 
 // tests for locate_character
+TEST_CASE("test for locate_character") {
+    width = 2; height = 1;
+    char m[] = {MINOTAUR, PLAYER};
+    map = m;
+    int y, x;
+    CHECK(locate_character(PLAYER, &y, &x) == FOUND_CHARACTER);
+    CHECK(x == 1); CHECK(y == 0);
+    CHECK(locate_character('X', &y, &x) == CHARACTER_NOT_FOUND);
+}
+TEST_SUITE_END();
 
 // tests for charge_minotaur
+TEST_SUITE_BEGIN("charge_minotaur");
+TEST_CASE("test for charge_minotaur") {
+    int y = 0, x = 0;
+
+    // 1. Invalid direction
+    CHECK(charge_minotaur(&y, &x, 0, 3, 'z') == MOVED_INVALID_DIRECTION);
+
+    // 2. Catch player
+    char m1[] = {MINOTAUR, EMPTY, PLAYER, EMPTY};
+    map = m1; y = 0; x = 0;
+    CHECK(charge_minotaur(&y, &x, 0, 2, RIGHT) == CAUGHT_PLAYER);
+
+    // 3. Hit wall (destroys it)
+    char m2[] = {MINOTAUR, EMPTY, WALL, EMPTY};
+    map = m2; y = 0; x = 0;
+    CHECK(charge_minotaur(&y, &x, 0, 5, RIGHT) == MOVED_WALL);
+
+    // 3. Hit wall (destroys it)
+    char m3[] = {MINOTAUR, EMPTY, WALL, EMPTY};
+    map = m3; y = 0; x = 0;
+    CHECK(charge_minotaur(&y, &x, 0, 5, RIGHT) == MOVED_WALL);
+}
+TEST_SUITE_END();
 
 // tests for sees_player
+TEST_SUITE_BEGIN("sees_player");
+TEST_CASE("RIGHT") {
+    width = 4; height = 1;
+    char m[] = {MINOTAUR, EMPTY, EMPTY, PLAYER};
+    map = m;
+    CHECK(sees_player(0, 3, 0, 0) == RIGHT);
+}
 
+TEST_CASE("LEFT") {
+    width = 4; height = 1;
+    char m[] = {PLAYER, EMPTY, EMPTY, MINOTAUR};
+    map = m;
+    CHECK(sees_player(0, 0, 0, 3) == LEFT);
+}
+
+TEST_CASE("DOWN") {
+    width = 1; height = 3;
+    char m[] = {MINOTAUR, EMPTY, PLAYER};
+    map = m;
+    CHECK(sees_player(2, 0, 0, 0) == DOWN);
+}
+
+TEST_CASE("UP") {
+    width = 1; height = 3;
+    char m[] = {PLAYER, EMPTY, MINOTAUR};
+    map = m;
+    CHECK(sees_player(0, 0, 2, 0) == UP);
+}
+
+TEST_CASE("wall horizontal") {
+    width = 4; height = 1;
+    char m[] = {MINOTAUR, WALL, EMPTY, PLAYER};
+    map = m;
+    CHECK(sees_player(0, 3, 0, 0) == SEES_NOTHING);
+}
+
+TEST_CASE("wall vertical") {
+    width = 1; height = 3;
+    char m[] = {MINOTAUR, WALL, PLAYER};
+    map = m;
+    CHECK(sees_player(2, 0, 0, 0) == SEES_NOTHING);
+}
+
+TEST_CASE("no line of sight diagonal") {
+    width = 2; height = 2;
+    char m[] = {MINOTAUR, EMPTY, EMPTY, PLAYER};
+    map = m;
+    CHECK(sees_player(1, 1, 0, 0) == SEES_NOTHING);
+}
 TEST_SUITE_END();
-
-/* tests for game.c */
-TEST_SUITE_BEGIN("Game tests");
 
 // tests for check_win
+TEST_CASE("Testing for win") {
+    width = 10;
+    height = 10;
+    // Adds global values so the test has something to test against
+    CHECK(check_win(5,5) == KEEP_GOING);
+    // Keeps going because not outside the width
+    CHECK(check_win(5,10) == YOU_WIN);
+    // Won because outside
+    CHECK(check_win(-1,5) == YOU_WIN);
+    // Won because outside
+}
 
 // test for check_loss
-
-TEST_SUITE_END();
+TEST_CASE("Testing for loss") {
+    CHECK(check_loss(3,3,3,3) == YOU_LOSE);
+    // Lost because same position
+    CHECK(check_loss(3,3,1,1) == KEEP_GOING);
+    // Keeps going because not same position
+}
