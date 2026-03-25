@@ -55,7 +55,7 @@ void print_map(void){
             }
             else {
                 // If neither is on, then copies what was there previously (wall or blank)
-                for (int col = 0; col < width, col++){
+                for (int col = 0; col < width; col++){
 
                 }
                 char tile = map[(y * width) + x];
