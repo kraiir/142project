@@ -38,37 +38,24 @@ static void printc(char c) {
     printf("%c", c);
 }
 
-void print_map(void){
-    // Print the map given in the global map variable
+void print_map(void) {
     for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++)
-        {
-            // Using nested loops goes through rows and columns to go to every point on the array
-            if (y == player_y && x == player_x) {
-                // Checks if the current part of the map has the same coordinates as where the player should be
-                printc(PLAYER);
-            }
-            else if (y == minotaur_y && x == minotaur_x) {
-                // Checks if the current part of the map has the same coordinates as where the minotaur should be
-                // Only if the player isn't already at the location
-                printc(MINOTAUR);
-            }
-            else {
-                // If neither is on, then copies what was there previously (wall or blank)
-                for (int col = 0; col < width; col++){
+        for (int x = 0; x < width; x++) {
+            // USE ELSE IF to ensure only ONE character is printed per coordinate
 
-                }
-                char tile = map[(y * width) + x];
-                printc(tile);
-            }
-            if (COL < width - 1)
-            {
+
+
+            // Pull the character (WALL or EMPTY) from the array
+            char tile = map[(y * width) + x];
+            printc(tile);
+
+
+            // Space between columns - only use ONE or TWO spaces
+            if (x < width - 1) {
                 printf(" ");
             }
-            // Adds a space between each part per formatting
         }
         printf("\n");
-        // Adds a new line between each part per formatting
     }
 }
 
