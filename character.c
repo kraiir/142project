@@ -61,11 +61,8 @@ int move_character(int * y, int * x, char direction, char character) {
     else if (direction == RIGHT) next_x++;
     else return MOVED_INVALID_DIRECTION;
 
-    // If it's the PLAYER trying to leave the map, don't.
-    if (character == PLAYER) {
-        if (next_y < 0 || next_y >= height || next_x < 0 || next_x >= width) {
-            return MOVED_WALL;
-        }
+    if (next_y < 0 || next_y >= height || next_x < 0 || next_x >= width) {
+        return MOVED_WALL; // Treat the "void" outside the map as a wall
     }
 
     if (map[(next_y * width) + next_x] == WALL) {

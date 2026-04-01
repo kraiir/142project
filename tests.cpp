@@ -108,12 +108,24 @@ TEST_CASE("test for charge_minotaur") {
     char m2[] = {MINOTAUR, EMPTY, WALL, EMPTY};
     map = m2; y = 0; x = 0;
     CHECK(charge_minotaur(&y, &x, 0, 5, RIGHT) == MOVED_WALL);
-
-    // 3. Hit wall (destroys it)
-    char m3[] = {MINOTAUR, EMPTY, WALL, EMPTY};
-    map = m3; y = 0; x = 0;
-    CHECK(charge_minotaur(&y, &x, 0, 5, RIGHT) == MOVED_WALL);
 }
+TEST_CASE("charge_minotaur - Long charge to wall") {
+    width = 5; height = 1;
+    // Index: 0 1 2 3 4
+    // Map:   M _ _ _ W
+    char m_long[] = {MINOTAUR, EMPTY, EMPTY, EMPTY, WALL};
+    map = m_long;
+    int my = 0, mx = 0;
+
+    CHECK(charge_minotaur(&my, &mx, 0, 10, RIGHT) == MOVED_OKAY);
+    CHECK(mx == 1);
+
+    while (charge_minotaur(&my, &mx, 0, 10, RIGHT) == MOVED_OKAY);
+
+    CHECK(mx == 3);
+    CHECK(map[3] == MINOTAUR);
+}
+
 TEST_SUITE_END();
 
 // tests for sees_player
@@ -187,4 +199,23 @@ TEST_CASE("Testing for loss") {
     // Lost because same position
     CHECK(check_loss(3,3,1,1) == KEEP_GOING);
     // Keeps going because not same position
+}
+
+// test for load map
+TEST_CASE("load_map - File does not exist") {
+    int h, w;
+    // Add (char *) before the string to remove the warning
+    char* result = load_map((char *)"fakefile.txt", &h, &w);
+    CHECK(result == NULL);
+}
+
+TEST_CASE("load_map - Successful load") {
+    int h = 0, w = 0;
+    // Add (char *) here as well
+    char* result = load_map((char *)"map.txt", &h, &w);
+    if (result != NULL) {
+        CHECK(h > 0);
+        CHECK(w > 0);
+        free(result);
+    }
 }
