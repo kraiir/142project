@@ -50,7 +50,7 @@ TEST_CASE("A test for load_map") {
 
 TEST_SUITE_END();
 
-/* tests for character.c */
+// tests for character movement
 TEST_SUITE_BEGIN("Character tests");
 TEST_CASE("move_character - All outcomes") {
     width = 3; height = 1;
@@ -58,26 +58,18 @@ TEST_CASE("move_character - All outcomes") {
     map = test_map;
     int py = 0, px = 0;
 
-    // 1. Invalid direction (covers first if)
+    // Invalid direction
     CHECK(move_character(&py, &px, 'z', PLAYER) == MOVED_INVALID_DIRECTION);
 
-    // 2. Move OK (covers empty space logic and map update)
+    // Move ok
     CHECK(move_character(&py, &px, 'd', PLAYER) == MOVED_OKAY);
     CHECK(px == 1);
     CHECK(test_map[0] == ' ');
     CHECK(test_map[1] == PLAYER);
 
-    // 3. Hit Wall (covers wall collision branch)
+    // Hit wall
     CHECK(move_character(&py, &px, 'd', PLAYER) == MOVED_WALL);
 }
-
-// tests for move_character
-TEST_SUITE_BEGIN("move_character");
-TEST_CASE("test for load_map") {
-
-}
-
-TEST_SUITE_END();
 
 // tests for locate_character
 TEST_CASE("test for locate_character") {
@@ -96,34 +88,44 @@ TEST_SUITE_BEGIN("charge_minotaur");
 TEST_CASE("test for charge_minotaur") {
     int y = 0, x = 0;
 
-    // 1. Invalid direction
+    // invalid direction
     CHECK(charge_minotaur(&y, &x, 0, 3, 'z') == MOVED_INVALID_DIRECTION);
 
-    // 2. Catch player
+    // catch player
     char m1[] = {MINOTAUR, EMPTY, PLAYER, EMPTY};
     map = m1; y = 0; x = 0;
     CHECK(charge_minotaur(&y, &x, 0, 2, RIGHT) == CAUGHT_PLAYER);
 
-    // 3. Hit wall (destroys it)
+    // hit wall (destroys it)
     char m2[] = {MINOTAUR, EMPTY, WALL, EMPTY};
     map = m2; y = 0; x = 0;
     CHECK(charge_minotaur(&y, &x, 0, 5, RIGHT) == MOVED_WALL);
 }
+
 TEST_CASE("charge_minotaur - Long charge to wall") {
-    width = 5; height = 1;
-    // Index: 0 1 2 3 4
-    // Map:   M _ _ _ W
-    char m_long[] = {MINOTAUR, EMPTY, EMPTY, EMPTY, WALL};
+    width = 6;
+    height = 1;
+    // Index: 0 1 2 3 4 5
+    // Map:   M _ _ _ _ W
+    char m_long[] = {MINOTAUR, EMPTY, EMPTY, EMPTY, EMPTY, WALL};
     map = m_long;
     int my = 0, mx = 0;
 
+    //minotaur moves 2 steps (from index 0 to index 2)
     CHECK(charge_minotaur(&my, &mx, 0, 10, RIGHT) == MOVED_OKAY);
-    CHECK(mx == 1);
+    CHECK(mx == 2);
+    CHECK(map[2] == MINOTAUR);
+    CHECK(map[0] == EMPTY);
 
-    while (charge_minotaur(&my, &mx, 0, 10, RIGHT) == MOVED_OKAY);
+    //minotaur moves again right next to wall
+    CHECK(charge_minotaur(&my, &mx, 0, 10, RIGHT) == MOVED_OKAY);
+    CHECK(mx == 4); //minotaur coords
+    CHECK(map[5] == WALL);
 
-    CHECK(mx == 3);
-    CHECK(map[3] == MINOTAUR);
+    //minotaur hits wall
+    CHECK(charge_minotaur(&my, &mx, 0, 10, RIGHT) == MOVED_WALL);
+    CHECK(mx == 5);
+    CHECK(map[5] == MINOTAUR);
 }
 
 TEST_SUITE_END();
@@ -184,13 +186,13 @@ TEST_SUITE_END();
 TEST_CASE("Testing for win") {
     width = 10;
     height = 10;
-    // Adds global values so the test has something to test against
+    // adds global values so the test has something to test against
     CHECK(check_win(5,5) == KEEP_GOING);
-    // Keeps going because not outside the width
+    // keeps going because not outside the width
     CHECK(check_win(5,10) == YOU_WIN);
-    // Won because outside
+    // won because outside
     CHECK(check_win(-1,5) == YOU_WIN);
-    // Won because outside
+    // won because outside
 }
 
 // test for check_loss
@@ -202,14 +204,14 @@ TEST_CASE("Testing for loss") {
 }
 
 // test for load map
-TEST_CASE("load_map - File does not exist") {
+TEST_CASE("file does not exist") {
     int h, w;
     // Add (char *) before the string to remove the warning
     char* result = load_map((char *)"fakefile.txt", &h, &w);
     CHECK(result == NULL);
 }
 
-TEST_CASE("load_map - Successful load") {
+TEST_CASE("successful load") {
     int h = 0, w = 0;
     // Add (char *) here as well
     char* result = load_map((char *)"map.txt", &h, &w);

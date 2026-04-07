@@ -21,6 +21,16 @@ int minotaur_x, minotaur_y;
 
 void update_minotaur(int player_y, int player_x, int *minotaur_y, int *minotaur_x, char *charge_direction);
 
+void print_map();
+int check_loss(int player_y, int player_x, int minotaur_y, int minotaur_x);
+int check_win(int player_y, int player_x);
+int move_character(int * y, int * x, char direction, char character_symbol);
+int locate_character(char character, int * character_y, int * character_x);
+int charge_minotaur(int *minotaur_y, int *minotaur_x, int player_y, int player_x, char charge_direction);
+char sees_player(int player_y, int player_x, int minotaur_y, int minotaur_x);
+char *load_map(char * filename, int * map_height, int * map_width);
+void print_revealed_map(int player_y, int player_x);
+
 // These global variables must be used to store map information.
 // Almost every function needs these variables, so keeping them as globals helps keep things organized.
 // map is a pointer to a dynamically allocated map for displaying to the user
@@ -93,7 +103,7 @@ int main(void) {
         return ERR_NO_MINOTAUR;
     }
 
-    /*
+    /* Given hardcoded from base code
     // Set the width and height for the hardcoded map
     width = HARDCODED_WIDTH;
     height = HARDCODED_HEIGHT;
@@ -112,22 +122,55 @@ int main(void) {
     // Loop until we hit the end of input
     // Input holds the user input
     char input = 0;
+    int debug_mode = 0; // 0 for restricted, 1 for debug (full)
     while (input != EOF && input != 4) {
-        // Print the map
-        print_map();
+        // print the mapg
+        if (debug_mode == 1) {
+            print_map();
+        } else {
+            print_revealed_map(player_y, player_x); // Show only vision radius
+        }
 
-        // Get a character - blocks until one is input
+        //win/lose message
+        if (check_win(player_y, player_x) == YOU_WIN) {
+            printf("Congratulations! You win!\n");
+        } else if (check_loss(player_y, player_x, minotaur_y, minotaur_x) == YOU_LOSE) {
+            printf("Sorry, you lose.\n");
+        }
+
+        // get character
         input = getch();
 
-        // update the minotaur
+        //if g is pressed then toggle between modes
+        if (input == 'g' || input == 'G') {
+            if (debug_mode == 0) {
+                debug_mode = 1;
+            } else {
+                debug_mode = 0;
+            }
+            // skip the rest of the loop so update_minotaur doesn't trigger
+            continue;
+        }
+
+        // update minotaur
         update_minotaur(player_y, player_x, &minotaur_y, &minotaur_x, &charge_direction);
 
         // move the player only if they haven't been caught
         if (check_loss(player_y, player_x, minotaur_y, minotaur_x) == KEEP_GOING) {
             move_character(&player_y, &player_x, input, PLAYER);
         }
-    } // quit if we hit the end of input
-    free(map);
+    }
+
+    //final loop since missing frame
+    if (debug_mode == 1) {
+        print_map();
+    } else {
+        print_revealed_map(player_y, player_x);
+    }
+
+
+
+    free(map); //free memory
     map = NULL;
     // You must return the correct error code from defines.h from main depending on what happened
     return NO_ERROR;
